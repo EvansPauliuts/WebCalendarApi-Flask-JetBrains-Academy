@@ -42,6 +42,27 @@ class EventDate(db.Model):
 db.create_all()
 
 
+class EventByID(Resource):
+    @marshal_with(resource_fields)
+    def get(self, id):
+        get_id = EventDate.query.filter(EventDate.id == id).first()
+
+        if get_id is None:
+            abort(404, 'The event doesn\'t exist!')
+        return get_id
+
+    def delete(self, id):
+        get_delete = EventDate.query.filter(EventDate.id == id).first()
+
+        if get_delete is None:
+            abort(404, 'The event doesn\'t exist!')
+
+        EventDate.query.filter_by(id=id).delete()
+        db.session.commit()
+
+        return {'message': 'The event has been deleted!'}
+
+
 class GetEventToday(Resource):
     @marshal_with(resource_fields)
     def get(self):
@@ -83,6 +104,7 @@ class EventToday(Resource):
 
 api.add_resource(EventToday, '/event')
 api.add_resource(GetEventToday, '/event/today')
+api.add_resource(EventByID, '/event/<int:id>')
 
 
 if __name__ == '__main__':

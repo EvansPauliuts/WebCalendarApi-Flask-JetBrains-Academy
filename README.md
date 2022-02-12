@@ -1,50 +1,74 @@
 # WebCalendarApi-Flask-JetBrains-Academy
 This project jetbrains academy https://hyperskill.org/projects/170
 
-## Work on project. Stage 3/4: Relax
+## Work on project. Stage 4/4: Back to the future
 
 ### Objectives
-Create a model to save events to the database. The table should contain the following columns:
+In this stage, add a resource with the /event/<int:id> URL. It should handle the following requests:
 
-- ```id``` of the ```INTEGER``` type. It should be our ```PRIMARY KEY```.
-- ```event``` of the ```VARCHAR``` type. It should be ```NOT NULL```.
-- ```date``` of the ```DATE``` type. It should be ```NOT NULL```.
-
-You can use any name for your database.
-
-Now your REST API should have the following features:
-- ```POST``` request for the /event endpoint should save the event to your database. 
-It should require the same arguments as in the previous stage.
-- ```GET``` request for the /event endpoint should return all the events from the database.
-- ```GET``` request for the /event/today endpoint should return the list of today's events.
+- A ```GET``` request should return the event with the ID in JSON format. If an event doesn't exist, 
+return ```404``` with the following message: ```The event doesn't exist!```.
+- A ```DELETE``` request should delete the event with the given ID and respond with the following response body:
+```json
+{
+    "message": "The event has been deleted!"
+}
+```
+If the event with the ID doesn't exist, return ```404``` with the message ```The event doesn't exist!```
+- A ```GET``` request for the /event endpoint with ```start_time``` and ```end_time``` parameters should 
+return a list of events for the given time range. If the arguments are missing,
+return the list of all events.
+- The URLs from the previous stage should work in the same way.
 
 #### Examples
 
-##### Example 1: ```GET``` <em>request for the /event endpoint</em>
+##### Example 1: ```GET``` <em>request for the /event?start_time=2020-10-10&end_time=2020-10-20 endpoint</em>
 Response body:
 ```json
 [
    {
       "id":1,
       "event":"Video conference",
-      "date":"2021-03-01"
+      "date":"2020-10-15"
    },
    {
       "id":2,
       "event":"Today's first event",
-      "date":"2021-02-28"
+      "date":"2020-10-20"
    }
 ]
 ```
 
-##### Example 2: ```GET``` <em>request for the /event/today endpoint.</em>
+##### Example 2: ```GET``` <em>request for the /event/1 endpoint</em>
 Response body:
 ```json
-[
-   {
-      "id":2,
-      "event":"Today's first event",
-      "date":"2021-02-28"
-   }
-]
+{
+    "id":1,
+    "event":"Video conference",
+    "date":"2020-10-15"
+}
+```
+
+##### Example 3: ```GET``` <em>request for the /event/10 endpoint</em>
+Response body:
+```json
+{
+    "message": "The event doesn't exist!"
+}
+```
+
+##### Example 4: ```DELETE``` <em>request for the /event/1 endpoint</em>
+Response body:
+```json
+{
+    "message": "The event has been deleted!"
+}
+```
+
+##### Example 5: ```DELETE``` <em>request for the /event/10 endpoint</em>
+Response body:
+```json
+{
+    "message": "The event doesn't exist!"
+}
 ```
