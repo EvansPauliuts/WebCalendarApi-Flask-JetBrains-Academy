@@ -1,12 +1,24 @@
 import sys
+import datetime
 
-from flask import Flask, jsonify
-from flask_restful import Api, Resource, reqparse, inputs
+from flask import Flask, request, abort
+from flask_sqlalchemy import SQLAlchemy
+from flask_restful import Api, Resource, reqparse, inputs, fields, marshal_with
 
 app = Flask(__name__)
 api = Api(app)
 
 parser = reqparse.RequestParser()
+
+db = SQLAlchemy(app)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+
+resource_fields = {
+    'id': fields.Integer,
+    'event': fields.String,
+    'date': fields.DateTime(dt_format='iso8601')
+}
+
 parser.add_argument(
     'event',
     type=str,
@@ -21,25 +33,56 @@ parser.add_argument(
 )
 
 
-class EventToday(Resource):
+class EventDate(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    event = db.Column(db.String(80), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+
+
+db.create_all()
+
+
+class GetEventToday(Resource):
+    @marshal_with(resource_fields)
     def get(self):
-        return {'data': 'There are no events for today!'}
+        return EventDate.query.filter(EventDate.date == datetime.date.today()).all()
+
+
+class EventToday(Resource):
+    @marshal_with(resource_fields)
+    def get(self):
+        start_time = request.args.get('start_time')
+        end_time = request.args.get('end_time')
+
+        if start_time and end_time:
+            events = EventDate.query.filter(EventDate.date >= start_time).filter(EventDate.date <= end_time).all()
+            if len(events) < 1:
+                abort(404, {'message': 'The event doesn\'t exist!'})
+            return events
+        return EventDate.query.all()
 
     def post(self):
         args = parser.parse_args()
 
         event = args['event']
-        date = str(args['date'].date())
+        date = args['date'].date()
         message = 'The event has been added!'
 
-        return jsonify(
-            message=message,
-            event=event,
-            date=date
-        )
+        new_event = EventDate(event=event, date=date)
+        db.session.add(new_event)
+        db.session.commit()
+
+        data_event = {
+            'message': message,
+            'event': event,
+            'date': str(date)
+        }
+
+        return data_event
 
 
 api.add_resource(EventToday, '/event')
+api.add_resource(GetEventToday, '/event/today')
 
 
 if __name__ == '__main__':
